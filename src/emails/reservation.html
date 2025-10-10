@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="fr" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8">
+    <title>Altamaro Confirmation de réservation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="x-apple-disable-message-reformatting">
+    <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
+    <style>
+      a { color:#2f4632; }
+      .btn a { text-decoration:none !important; }
+      @media only screen and (max-width:600px) {
+        .container { width:100% !important; }
+        .px-24 { padding-left:16px !important; padding-right:16px !important; }
+        .logo { width:160px !important; height:auto !important; }
+        .hero-title { font-size:24px !important; line-height:32px !important; }
+        .card { padding:16px !important; }
+      }
+    </style>
+  </head>
+  <body style="margin:0; padding:0; background:#f5f7f5;">
+    <!-- preheader -->
+    <div style="display:none; max-height:0; overflow:hidden; font-size:1px; line-height:1px; color:#f5f7f5;">
+      Votre réservation est confirmée pour {{date}} à {{time}} ({{people}} pers.) chez Altamaro.
+    </div>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f5f7f5;">
+      <tr>
+        <td align="center" style="padding:24px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="width:600px; max-width:600px; background:#ffffff; border-radius:12px; overflow:hidden;">
+            <!-- Header -->
+            <tr>
+              <td align="center" style="background:#2f4632; padding:28px 24px;">
+                <img
+                  src="https://res.cloudinary.com/dryxaquva/image/upload/v1759590547/l0khkr88b4egcl8hwy6g.jpg"
+                  width="220" class="logo"
+                  alt="Altamaro"
+                  style="display:block; width:220px; height:auto; margin:0 auto 8px;"
+                />
+              </td>
+            </tr>
+
+            <!-- Hero -->
+            <tr>
+              <td class="px-24" style="padding:32px 24px 8px;">
+                <h1 class="hero-title" style="margin:0 0 8px; color:#2f4632; font:700 28px/36px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+                  Confirmation de réservation
+                </h1>
+                <p style="margin:0; color:#32473a; font:400 16px/24px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+                  Merci <strong>{{first_name}} {{last_name}}</strong>. Votre réservation chez
+                  <strong>Altamaro</strong> a bien été enregistrée.
+                </p>
+              </td>
+            </tr>
+
+            <tr><td style="padding:16px 24px 0;"><hr style="border:none; border-top:1px solid #e4e9e5; margin:0;"></td></tr>
+
+            <!-- Reservation info ONLY -->
+            <tr>
+              <td class="px-24" style="padding:16px 24px 28px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#ffffff; border:1px solid #e4e9e5; border-radius:10px;">
+                  <tr>
+                    <td class="card" style="padding:18px 20px;">
+                      <p style="margin:0 0 8px; color:#2f4632; font:600 15px/22px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+                        Nombre de personnes&nbsp;: <span style="font-weight:700;">{{people}}</span>
+                      </p>
+                      <p style="margin:0 0 8px; color:#2f4632; font:600 15px/22px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+                        Date&nbsp;: <span style="font-weight:700;">{{date}}</span>
+                      </p>
+                      <p style="margin:0 0 8px; color:#2f4632; font:600 15px/22px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+                        Heure&nbsp;: <span style="font-weight:700;">{{time}}</span>
+                      </p>
+                      <p style="margin:0 0 8px; color:#2f4632; font:600 15px/22px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+                        Prénom&nbsp;: <span style="font-weight:700;">{{first_name}}</span>
+                      </p>
+                      <p style="margin:0 0 8px; color:#2f4632; font:600 15px/22px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+                        Nom&nbsp;: <span style="font-weight:700;">{{last_name}}</span>
+                      </p>
+                      <p style="margin:0 0 8px; color:#2f4632; font:600 15px/22px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+                        Adresse e-mail&nbsp;:
+                        <a href="mailto:{{email}}" style="color:#1a73e8; text-decoration:none;">{{email}}</a>
+                      </p>
+                      <p style="margin:0 0 8px; color:#2f4632; font:600 15px/22px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+                        Téléphone&nbsp;: <span style="font-weight:700;">{{phone}}</span>
+                      </p>
+                      <p style="margin:0; color:#2f4632; font:600 15px/22px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+                        Espace&nbsp;: <span style="font-weight:700;">{{espace}}</span>
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- ===== ALTAMARO FOOTER ===== -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#2f4632;">
+              <tr>
+                <td align="center" style="padding:32px 16px;">
+                  <table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="width:100%; max-width:640px;">
+                    <tr>
+                      <!-- Left: Logo + Social -->
+                      <td valign="top" style="padding:0 12px 24px 12px; width:33.33%; text-align:center;">
+                        <img src="https://res.cloudinary.com/dryxaquva/image/upload/v1759590547/l0khkr88b4egcl8hwy6g.jpg" width="150" alt="Altamaro" style="display:block; margin:0 auto 12px auto; border:0; outline:none; text-decoration:none;">
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
+                          <tr>
+                            <td style="padding:0 6px;">
+                              <a href="https://www.instagram.com/altamaroparis/" style="text-decoration:none;">
+                                <img src="https://res.cloudinary.com/dryxaquva/image/upload/v1760021468/instagram_tqbsea.png" width="20" height="20" alt="Instagram" style="display:block;">
+                              </a>
+                            </td>
+                            <td style="padding:0 6px;">
+                              <a href="https://www.tiktok.com/@altamaro" style="text-decoration:none;">
+                                <img src="https://res.cloudinary.com/dryxaquva/image/upload/v1760021468/80ff2e5a537061e57f8e2e1412db8bb9_nkam3d.png" width="30" height="30" alt="TikTok" style="display:block;">
+                              </a>
+                            </td>
+                            <td style="padding:0 6px;">
+                              <a href="https://www.facebook.com/altamaroparis/" style="text-decoration:none;">
+                                <img src="https://res.cloudinary.com/dryxaquva/image/upload/v1760021468/toppng.com-facebook-fb-logo-icon-round-outline-3615x3912_hydmwj.png" width="30" height="30" alt="Facebook" style="display:block;">
+                              </a>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+
+                      <!-- Middle: Contact (address is now a link) -->
+                      <td valign="top" style="padding:0 12px 24px 12px; width:33.33%; text-align:center; color:#ffffff;">
+                        <div style="font-family:Arial,Helvetica,sans-serif; font-size:18px; line-height:24px; color:#b1853c; font-weight:700; margin-bottom:8px;">Contact</div>
+                        <div style="font-family:Arial,Helvetica,sans-serif; font-size:14px; line-height:20px;">
+                          <a href="https://www.google.com/maps/place/9+Rue+Brunel,+75017+Paris,+France/@48.8769731,2.2858453,17z/data=!3m1!4b1!4m6!3m5!1s0x47e66ff2c85ae19b:0x7400a8cdc8a2fa47!8m2!3d48.8769696!4d2.2884202!16s%2Fg%2F11q2x8sspn"
+                             style="color:#ffffff; text-decoration:underline;">9 Rue Brunel, 75017 Paris, France</a><br>
+                          Tél : +33 (0) 744095642<br>
+                          <a href="mailto:Contact@altamaro.com" style="color:#ffffff; text-decoration:none;">Contact@altamaro.com</a>
+                        </div>
+                      </td>
+
+                      <!-- Right: Hours -->
+                      <td valign="top" style="padding:0 12px 24px 12px; width:33.33%; text-align:center; color:#ffffff;">
+                        <div style="font-family:Arial,Helvetica,sans-serif; font-size:18px; line-height:24px; color:#b1853c; font-weight:700; margin-bottom:8px;">Horaires</div>
+                        <div style="font-family:Arial,Helvetica,sans-serif; font-size:14px; line-height:20px;">
+                          Du lundi au samedi :<br>
+                          12h00 – 15h00 | 19h00 – 00h00<br>
+                          Dimanche : Ouvert uniquement sur demande.
+                        </div>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td colspan="3" style="padding-top:8px;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                          <tr><td style="border-top:1px solid rgba(255,255,255,0.15); font-size:0; line-height:0;">&nbsp;</td></tr>
+                        </table>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td colspan="3" align="center" style="padding:16px 12px 8px 12px;">
+                        <div style="font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:18px; color:#ffffff; opacity:0.9;">
+                         ALTAMARO &nbsp;•&nbsp; Copyright © 2025 &nbsp;•&nbsp; Tous droits réservés
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+            <!-- ===== END FOOTER ===== -->
+
+          </table>
+       
+  </body>
+</html>
