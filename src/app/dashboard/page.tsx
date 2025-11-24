@@ -1,109 +1,280 @@
+// src/app/dashboard/page.tsx
 "use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+
+
+import { useUserRole } from "@/hooks/useUserRole";
+import {
+  DashboardShell,
+  type DashboardAction,
+} from "@/components/dashboard-shell";
+import RequireRole from "@/components/RequireRole";
+
 
 export default function DashboardPage() {
   const r = useRouter();
-  const [uid, setUid] = useState<string | null>(null);
+  const { loading, uid, role } = useUserRole();
+  const [displayName, setDisplayName] = useState("Utilisateur");
+const [displayEmail, setDisplayEmail] = useState("contact@altamaro.com");
 
-  // Redirect to /login if not signed in
+
+  // Redirection si pas connecté ou pas de rôle
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (!user) r.replace("/login");
-      else setUid(user.uid);
+    if (!loading) {
+      if (!uid || !role) {
+        r.replace("/login");
+      }
+    }
+  }, [loading, uid, role, r]);
+
+  useEffect(() => {
+  if (!loading && uid) {
+    const authUser = auth.currentUser;
+
+    // valeurs par défaut depuis Auth
+    if (authUser) {
+      if (authUser.displayName) setDisplayName(authUser.displayName);
+      if (authUser.email) setDisplayEmail(authUser.email);
+    }
+
+    // puis on essaie de compléter avec Firestore /user/{uid}
+    const ref = doc(db, "user", uid);
+    getDoc(ref).then((snap) => {
+      if (!snap.exists()) return;
+      const data = snap.data() as any;
+      const nameFromDoc =
+        data.display_name ||
+        `${data.Prnom || ""} ${data.nomFamille || ""}`.trim();
+      const emailFromDoc = data.email;
+
+      if (nameFromDoc) setDisplayName(nameFromDoc);
+      if (emailFromDoc) setDisplayEmail(emailFromDoc);
     });
-    return () => unsub();
-  }, [r]);
+  }
+}, [loading, uid]);
 
-  if (!uid) return <div className="p-6">Loading…</div>;
 
-  // Actions shown on the dashboard
-  const actions = [
+  if (loading || !uid || !role) {
+    return <div className="p-6">Chargement...</div>;
+  }
+
+  const user = auth.currentUser;
+
+  // 🔐 Toutes les actions possibles (admin voit tout)
+  const allActions: DashboardAction[] = [
+        // ----- PAGES -----
+
+    {
+      href: "/dashboard/statistics",
+      title: "Statistiques",
+      desc: "Vue d’ensemble, tops, activité",
+      icon: "📊",
+      section: "Analyse",
+    },
+
     {
       href: "/dashboard/home",
-      title: "Edit Home Page",
-      desc: "Manage hero, texts, videos and sections of the Home page.",
-    },
-    {
-      href: "/dashboard/categories",
-      title: "Categories List",
-      desc: "Add, reorder, show/hide categories (Entrées, Plats, Desserts…).",
+      title: "Accueil",
+      desc: "Gestion du contenu principal",
+      icon: "🏠",
+      section: "Pages",
     },
     {
       href: "/dashboard/pages-common",
-      title: "Interface Commun",
-      desc: "Shared content for all category pages (hero, videos, chef text, dessert gallery).",
+      title: "Interface Commune",
+      desc: "Contenu partagé",
+      icon: "🧩",
+      section: "Pages",
     },
-    // Already added: Card (video-only admin)
     {
-      href: "/dashboard/card",
-      title: "Card",
-      desc: "Upload and manage videos (1 per page).",
+      href: "/dashboard/restaurant",
+      title: "Page Restaurant",
+      desc: "Images & vidéos",
+      icon: "🏨",
+      section: "Pages",
     },
-    // 🔹 NEW: Menu Interfaces (dynamic menu builder)
+
+    // ----- CARTE & PRODUITS -----
     {
       href: "/dashboard/menu",
-      title: "Menu Interfaces",
-      desc: "Build your dynamic menu: sections, titles, products, prices, descriptions & images.",
+      title: "Menus",
+      desc: "Sections & produits",
+      icon: "🍽️",
+      section: "Carte & Produits",
     },
     {
-  href: "/dashboard/menu/all",
-  title: "All Products",
-  desc: "Manage every product in one place: edit, reorder, toggle visibility, view or delete.",
-},
-{
-  href: "/dashboard/reservations",
-  title: "Reservations",
-  desc: "View all reservations grouped by today, upcoming and past.",
-},
-{
-  href: "/dashboard/branding",
-  title: "Branding & Social",
-  desc: "Logo and social links (Instagram, TikTok, Facebook, Google Maps).",
-}
+      href: "/dashboard/menu/all",
+      title: "Tous les Produits",
+      desc: "Liste complète",
+      icon: "🛒",
+      section: "Carte & Produits",
+    },
+    {
+      href: "/dashboard/categories",
+      title: "Catégories",
+      desc: "Entrées, plats, desserts…",
+      icon: "📂",
+      section: "Carte & Produits",
+    },
 
+    // ----- CLIENTS -----
+    {
+      href: "/dashboard/reservations",
+      title: "Réservations",
+      desc: "Demandes clients",
+      icon: "📅",
+      section: "Clients",
+    },
+    {
+      href: "/dashboard/reclamations",
+      title: "Réclamations",
+      desc: "Messages & réclamations",
+      icon: "✉️",
+      section: "Clients",
+    },
+    {
+      href: "/dashboard/users",
+      title: "Utilisateurs app",
+      desc: "Profils, blocage & bannissement.",
+      icon: "👤",
+      section: "Clients",
+    },
+
+    // ----- MARQUE -----
+    {
+      href: "/dashboard/branding",
+      title: "Branding & Réseaux",
+      desc: "Logos et liens sociaux",
+      icon: "🎨",
+      section: "Marque",
+    },
+    {
+      href: "/dashboard/card",
+      title: "Vidéos",
+      desc: "Télécharger & gérer",
+      icon: "🎞️",
+      section: "Marque",
+    },
+
+    // ----- OUTILS -----
+    
+    {
+      href: "/dashboard/administration",
+      title: "Administration",
+      desc: "Rôles & accès staff",
+      icon: "🧑‍💼",
+      section: "Administration",
+    },
   ];
 
-  return (
-    <div className="p-6 space-y-6">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <p className="text-sm text-gray-500">
-            Signed in as <code className="font-mono">{uid}</code>
-          </p>
-        </div>
-        <button
-          className="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300"
-          onClick={async () => {
-            await signOut(auth);
-            r.replace("/login");
-          }}
-        >
-          Sign out
-        </button>
-      </header>
+  // 🎯 Filtrage des actions selon le rôle
+  let actions: DashboardAction[] = [];
 
-      {/* Action grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {actions.map((a) => (
-          <Link
-            key={a.href}
-            href={a.href}
-            className="group block rounded-xl border border-gray-200 p-5 hover:shadow-md transition"
-          >
-            <div className="flex items-start justify-between">
-              <h2 className="text-lg font-medium">{a.title}</h2>
-              <span className="text-gray-400 group-hover:text-gray-600">→</span>
-            </div>
-            <p className="mt-2 text-sm text-gray-600">{a.desc}</p>
-          </Link>
-        ))}
-      </div>
-    </div>
+  if (role === "admin") {
+    actions = allActions;
+  } else if (role === "chef") {
+    actions = allActions.filter((a) =>
+      [
+        "/dashboard/menu",
+        "/dashboard/menu/all",
+        "/dashboard/categories",
+        "/dashboard/statistics",
+      ].includes(a.href)
+    );
+  } else if (role === "responsable_pages") {
+    actions = allActions.filter((a) =>
+      [
+        "/dashboard/home",
+        "/dashboard/pages-common",
+        "/dashboard/restaurant",
+        "/dashboard/branding",
+        "/dashboard/card",
+        "/dashboard/statistics",
+      ].includes(a.href)
+    );
+  } else if (role === "responsable_clients") {
+  const allowed = new Set<string>([
+    "/dashboard/statistics",
+    "/dashboard/reservations",
+    "/dashboard/reclamations",
+    "/dashboard/users",
+  ]);
+  actions = allActions.filter((a) => allowed.has(a.href));
+}
+
+
+    return (
+    <RequireRole
+      allow={[
+        "admin",
+        "chef",
+        "responsable_pages",
+        "responsable_clients",
+      ]}
+    >
+      <DashboardShell
+        uid={uid}
+        userName={displayName}
+  userEmail={displayEmail}
+  userRole={role}          
+       
+        actions={actions}
+        onSignOut={async () => {
+          await signOut(auth);
+          r.replace("/login");
+        }}
+      >
+        <div className="space-y-10">
+          <div>
+            <h1
+              className="text-4xl font-extrabold"
+              style={{ color: "#2f4632" }}
+            >
+              Tableau de Bord
+            </h1>
+            <p className="text-sm mt-2" style={{ color: "#43484f" }}>
+              Gérez l’ensemble du restaurant selon votre rôle.
+            </p>
+          </div>
+
+          <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">
+            {actions.map((a) => (
+              <Link
+                key={a.href}
+                href={a.href}
+                className="
+                  p-7 rounded-3xl border shadow-md hover:shadow-xl transition-all hover:-translate-y-1
+                "
+                style={{
+                  backgroundColor: "#ffffffee",
+                  borderColor: "#e8e2d7",
+                }}
+              >
+                <div className="text-4xl mb-4">{a.icon}</div>
+                <h2
+                  className="text-lg font-bold"
+                  style={{ color: "#2f4632" }}
+                >
+                  {a.title}
+                </h2>
+                <p
+                  className="text-sm mt-1"
+                  style={{ color: "#43484f" }}
+                >
+                  {a.desc}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </DashboardShell>
+    </RequireRole>
   );
 }
+

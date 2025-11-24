@@ -50,7 +50,10 @@ function euro(price: string) {
   if (!p) return "";
   const n = Number(p.replace(",", "."));
   if (!Number.isNaN(n) && /^\s*\d+[.,]?\d*\s*$/.test(p)) {
-    return `${n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+    return `${n.toLocaleString("fr-FR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })} €`;
   }
   return `${p} €`;
 }
@@ -85,11 +88,17 @@ type ItemImage = {
 
 /* ---------- component ---------- */
 
+type TabKey = "basics" | "preview" | "images";
+type ImageFilter = "all" | "visible" | "hidden";
+
 export default function ItemDetailsClient({ id }: { id: string }) {
   const router = useRouter();
 
   const itemRef = useMemo(() => doc(db, "menu_items", id), [id]);
-  const itemImagesCol = useMemo(() => collection(db, "menu_item_images"), []);
+  const itemImagesCol = useMemo(
+    () => collection(db, "menu_item_images"),
+    []
+  );
 
   const [item, setItem] = useState<Item | null>(null);
   const [images, setImages] = useState<ItemImage[]>([]);
@@ -102,6 +111,10 @@ export default function ItemDetailsClient({ id }: { id: string }) {
   const [detailDesc, setDetailDesc] = useState("");
   const [ingredients, setIngredients] = useState("");
   const [newFile, setNewFile] = useState<File | null>(null);
+
+  // onglets
+  const [tab, setTab] = useState<TabKey>("basics");
+  const [imageFilter, setImageFilter] = useState<ImageFilter>("all");
 
   /* subscriptions */
   useEffect(() => {
@@ -127,7 +140,10 @@ export default function ItemDetailsClient({ id }: { id: string }) {
         };
 
         // Keep the has_details flag correct even if someone changed fields elsewhere
-        const should = computeHasDetails(it.detail_desc || "", it.ingredients || "");
+        const should = computeHasDetails(
+          it.detail_desc || "",
+          it.ingredients || ""
+        );
         if ((x.has_details ?? false) !== should) {
           try {
             await updateDoc(itemRef, { has_details: should });
@@ -147,7 +163,11 @@ export default function ItemDetailsClient({ id }: { id: string }) {
     );
 
     const unsubImgs = onSnapshot(
-      query(itemImagesCol, where("item_ref", "==", itemRef), orderBy("order", "asc")),
+      query(
+        itemImagesCol,
+        where("item_ref", "==", itemRef),
+        orderBy("order", "asc")
+      ),
       (snap) => {
         setImages(
           snap.docs.map((d, i) => {
@@ -172,12 +192,22 @@ export default function ItemDetailsClient({ id }: { id: string }) {
   }, [itemRef, itemImagesCol]);
 
   if (item === null) {
-    return <div className="p-6">This product was not found (or has been deleted).</div>;
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        Ce produit n’existe plus (ou a été supprimé).
+      </div>
+    );
   }
 
   /* helpers */
   async function renumberImages() {
-    const snap = await getDocs(query(itemImagesCol, where("item_ref", "==", itemRef), orderBy("order", "asc")));
+    const snap = await getDocs(
+      query(
+        itemImagesCol,
+        where("item_ref", "==", itemRef),
+        orderBy("order", "asc")
+      )
+    );
     const batch = writeBatch(db);
     snap.docs.forEach((d, i) => batch.update(d.ref, { order: i }));
     await batch.commit();
@@ -187,7 +217,13 @@ export default function ItemDetailsClient({ id }: { id: string }) {
     // NOTE: This deletes Firestore image records. It does NOT delete the files from Cloudinary.
     // Doing that securely requires a server-side endpoint with your Cloudinary secret.
     while (true) {
-      const snap = await getDocs(query(itemImagesCol, where("item_ref", "==", itemRef), limit(400)));
+      const snap = await getDocs(
+        query(
+          itemImagesCol,
+          where("item_ref", "==", itemRef),
+          limit(400)
+        )
+      );
       if (snap.empty) break;
       const batch = writeBatch(db);
       snap.docs.forEach((d) => batch.delete(d.ref));
@@ -227,7 +263,12 @@ export default function ItemDetailsClient({ id }: { id: string }) {
       const newId = `${Date.now()}`;
       await setDoc(
         doc(itemImagesCol, newId),
-        { item_ref: itemRef, image_url: url, order: images.length, visible: true },
+        {
+          item_ref: itemRef,
+          image_url: url,
+          order: images.length,
+          visible: true,
+        },
         { merge: true }
       );
       setNewFile(null);
@@ -278,7 +319,12 @@ export default function ItemDetailsClient({ id }: { id: string }) {
 
   /* delete ONLY the details (and gallery), keep product */
   async function deleteDetailsOnly() {
-    if (!window.confirm("Delete this product's details and gallery? This cannot be undone.")) return;
+    if (
+      !window.confirm(
+        "Delete this product's details and gallery? This cannot be undone."
+      )
+    )
+      return;
     try {
       setBusy(true);
       // 1) remove images
@@ -301,7 +347,12 @@ export default function ItemDetailsClient({ id }: { id: string }) {
 
   /* delete product (cascade) */
   async function deleteItemAndBack() {
-    if (!window.confirm("Delete the entire product with its details and gallery? This cannot be undone.")) return;
+    if (
+      !window.confirm(
+        "Delete the entire product with its details and gallery? This cannot be undone."
+      )
+    )
+      return;
     try {
       setBusy(true);
       await deleteAllImages();
@@ -314,187 +365,363 @@ export default function ItemDetailsClient({ id }: { id: string }) {
     }
   }
 
+  const filteredImages = images.filter((im) => {
+    if (imageFilter === "visible") return im.visible;
+    if (imageFilter === "hidden") return !im.visible;
+    return true;
+  });
+
   /* UI */
   return (
-    <div className="p-6 space-y-8">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Product details</h1>
-        <div className="flex gap-2">
+    <div className="max-w-6xl mx-auto space-y-6">
+      {/* HEADER */}
+      <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1
+            className="text-3xl font-extrabold"
+            style={{ color: "#2f4632" }}
+          >
+            Détails du produit
+          </h1>
+          <p className="text-sm" style={{ color: "#43484f" }}>
+            Gérez la description longue, les ingrédients et la galerie
+            d’images pour ce produit.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
           <button
-  type="button"
-  onClick={() => {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      // go to previous page in history
-      router.back();
-    } else {
-      // direct entry (no history): go to the list page
-      router.push("/dashboard/menu");
-    }
-  }}
-  className="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300"
-  aria-label="Go back"
->
-  ← Back
-</button>
+            type="button"
+            onClick={() => {
+              if (
+                typeof window !== "undefined" &&
+                window.history.length > 1
+              ) {
+                router.back();
+              } else {
+                router.push("/dashboard/menu");
+              }
+            }}
+            className="px-3 py-2 rounded-xl text-sm font-medium border border-[#e4ded1] bg-white hover:bg-[#faf9f6]"
+            aria-label="Go back"
+          >
+            ← Retour
+          </button>
 
           <button
             onClick={deleteDetailsOnly}
-            className="px-3 py-2 rounded bg-amber-600 text-white hover:bg-amber-700"
+            className="px-3 py-2 rounded-xl text-sm font-semibold bg-amber-600 text-white hover:bg-amber-700"
             disabled={busy}
             title="Delete only the details & gallery, keep the product"
           >
-            {busy ? "Working…" : "Delete details"}
+            {busy ? "Working…" : "Supprimer les détails"}
           </button>
           <button
             onClick={deleteItemAndBack}
-            className="px-3 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+            className="px-3 py-2 rounded-xl text-sm font-semibold bg-red-600 text-white hover:bg-red-700"
             disabled={busy}
             title="Delete the entire product"
           >
-            {busy ? "Deleting…" : "Delete product"}
+            {busy ? "Deleting…" : "Supprimer le produit"}
           </button>
         </div>
       </header>
 
-      {err && <div className="text-red-600">{err}</div>}
+      {err && (
+        <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-2xl px-4 py-2">
+          {err}
+        </div>
+      )}
 
-      {/* Basics */}
-      <section className="space-y-3">
-        <h2 className="text-xl font-medium">Basics</h2>
-        <div className="border rounded p-3 grid gap-3 md:grid-cols-2">
-          <LabeledInput label="Title (name)" value={name} onChange={setName} />
-          <LabeledInput
-            label='Price (will display with "€")'
-            value={price}
-            onChange={setPrice}
-            placeholder="e.g. 10 or 5 - 24"
-          />
-          <div className="md:col-span-2 grid gap-3">
-            <LabeledTextArea rows={5} label="Description (long)" value={detailDesc} onChange={setDetailDesc} />
-            <LabeledTextArea rows={4} label="Ingrédients" value={ingredients} onChange={setIngredients} />
+      {/* TABS NAV comme page menu */}
+      <div className="flex flex-wrap gap-2 rounded-2xl p-1 bg-white shadow-sm border border-[#e4ded1]">
+        {[
+          { key: "basics", label: "Infos principales" },
+          { key: "preview", label: "Aperçu" },
+          { key: "images", label: "Images du produit" },
+        ].map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key as TabKey)}
+            className="px-4 py-2 rounded-xl text-sm font-medium transition-all"
+            style={
+              tab === t.key
+                ? {
+                    background:
+                      "linear-gradient(135deg,#2f4632,#435f47)",
+                    color: "#ffffff",
+                    boxShadow: "0 3px 10px rgba(47,70,50,0.3)",
+                  }
+                : {
+                    backgroundColor: "transparent",
+                    color: "#43484f",
+                  }
+            }
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ========== PANEL BASICS ========== */}
+      {tab === "basics" && (
+        <section className="bg-white rounded-3xl shadow-sm border border-[#e4ded1] p-6 space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h2
+                className="text-lg font-semibold"
+                style={{ color: "#2f4632" }}
+              >
+                Informations principales
+              </h2>
+              <p className="text-xs" style={{ color: "#43484f" }}>
+                Titre, prix, description longue et ingrédients. Le champ{" "}
+                <code>has_details</code> se met à jour automatiquement.
+              </p>
+            </div>
+            <span className="text-xs rounded-full px-3 py-1 bg-[#faf9f6] border border-[#e4ded1]">
+              has_details :{" "}
+              <strong>{item?.has_details ? "true" : "false"}</strong>
+            </span>
           </div>
-          <div className="md:col-span-2 flex items-center gap-3">
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <LabeledInput
+              label="Titre du produit"
+              value={name}
+              onChange={setName}
+            />
+            <LabeledInput
+              label='Prix (affiché avec "€")'
+              value={price}
+              onChange={setPrice}
+              placeholder="e.g. 10 ou 5 - 24"
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <LabeledTextArea
+              rows={5}
+              label="Description longue"
+              value={detailDesc}
+              onChange={setDetailDesc}
+            />
+            <LabeledTextArea
+              rows={5}
+              label="Ingrédients"
+              value={ingredients}
+              onChange={setIngredients}
+            />
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
             <button
               onClick={saveBasics}
               disabled={busy}
-              className={`px-3 py-2 rounded text-white ${
-                busy ? "bg-gray-400" : "bg-emerald-600 hover:bg-emerald-700"
-              }`}
+              className="px-4 py-2 rounded-xl text-sm font-semibold shadow"
+              style={{
+                backgroundColor: busy ? "#9aa3a1" : "#2f4632",
+                color: "#ffffff",
+              }}
             >
-              {busy ? "Saving…" : "Save changes"}
+              {busy ? "Saving…" : "Enregistrer les modifications"}
             </button>
-            {item?.has_details ? (
-              <span className="text-sm text-emerald-700">has_details: true</span>
-            ) : (
-              <span className="text-sm text-gray-500">has_details: false</span>
-            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* LIVE PREVIEW */}
-      <section className="space-y-3">
-        <h2 className="text-xl font-medium">Preview</h2>
-        <div className="border rounded p-4 bg-white">
-          <div className="flex items-start justify-between">
-            <h3 className="text-2xl font-semibold text-amber-800">{name || "—"}</h3>
-            <div className="text-xl text-amber-800">{price ? euro(price) : "—"}</div>
-          </div>
-
-          {detailDesc?.trim() ? (
-            <div className="mt-5">
-              <div className="text-lg font-semibold text-amber-800">Description</div>
-              <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-gray-800">{detailDesc}</p>
-            </div>
-          ) : null}
-
-          {ingredients?.trim() ? (
-            <div className="mt-5">
-              <div className="text-lg font-semibold text-amber-800">Ingrédients</div>
-              <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-gray-800">{ingredients}</p>
-            </div>
-          ) : null}
-        </div>
-      </section>
-
-      {/* Images */}
-      <section className="space-y-3">
-        <h2 className="text-xl font-medium">Images (gallery)</h2>
-        <div className="border rounded p-3 space-y-3">
-          <label className="flex flex-col gap-1">
-            <span className="text-sm text-gray-600">Add image</span>
-            <input type="file" accept="image/*" onChange={(e) => setNewFile(e.target.files?.[0] ?? null)} />
-          </label>
-          <button
-            onClick={addImage}
-            disabled={busy || !newFile}
-            className={`px-3 py-2 rounded text-white ${
-              busy || !newFile ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-            }`}
+      {/* ========== PANEL PREVIEW ========== */}
+      {tab === "preview" && (
+        <section className="bg-white rounded-3xl shadow-sm border border-[#e4ded1] p-6 space-y-3">
+          <h2
+            className="text-lg font-semibold"
+            style={{ color: "#2f4632" }}
           >
-            {busy ? "Uploading…" : "Add image"}
-          </button>
-        </div>
+            Aperçu (côté client)
+          </h2>
+          <p className="text-xs" style={{ color: "#43484f" }}>
+            Cet aperçu reproduit la carte vue par le client : titre, prix,
+            description et ingrédients.
+          </p>
 
-        <div className="grid gap-3">
-          {images.length === 0 && <div className="text-sm text-gray-600">No images yet.</div>}
-          {images.map((im, idx) => (
-            <div key={im.id} className="border rounded p-3 flex flex-col md:flex-row md:items-center gap-3">
-              {im.image_url ? (
-                <img
-                  src={cl(im.image_url, "f_auto,q_auto,w_240,h_160,c_fill")}
-                  alt=""
-                  className="w-60 h-40 object-cover rounded"
-                />
-              ) : (
-                <div className="w-60 h-40 bg-gray-100 rounded grid place-items-center text-xs text-gray-500">
-                  No image
-                </div>
-              )}
-
-              <label className="text-sm text-gray-600">
-                Replace image
-                <input
-                  className="block mt-1"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => e.target.files?.[0] && replaceImage(im, e.target.files[0])}
-                />
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={im.visible} onChange={() => toggleImage(im)} />
-                Visible
-              </label>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => moveImage(idx, idx - 1)}
-                  disabled={idx === 0}
-                  className={`px-2 py-1 rounded ${idx === 0 ? "bg-gray-300" : "bg-gray-200 hover:bg-gray-300"}`}
-                >
-                  ↑
-                </button>
-                <button
-                  onClick={() => moveImage(idx, idx + 1)}
-                  disabled={idx === images.length - 1}
-                  className={`px-2 py-1 rounded ${
-                    idx === images.length - 1 ? "bg-gray-300" : "bg-gray-200 hover:bg-gray-300"
-                  }`}
-                >
-                  ↓
-                </button>
-                <button
-                  onClick={() => deleteImage(im)}
-                  className="px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700"
-                >
-                  Delete
-                </button>
+          <div className="mt-3 rounded-2xl border border-[#e4ded1] bg-[#faf9f6] p-5 space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <h3 className="text-2xl font-semibold text-amber-800">
+                {name || "Nom du produit"}
+              </h3>
+              <div className="text-xl font-semibold text-amber-800">
+                {price ? euro(price) : "—"}
               </div>
             </div>
-          ))}
-        </div>
-      </section>
+
+            {detailDesc?.trim() ? (
+              <div className="mt-2">
+                <div className="text-sm font-semibold text-amber-800">
+                  Description
+                </div>
+                <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-gray-800">
+                  {detailDesc}
+                </p>
+              </div>
+            ) : null}
+
+            {ingredients?.trim() ? (
+              <div className="mt-3">
+                <div className="text-sm font-semibold text-amber-800">
+                  Ingrédients
+                </div>
+                <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-gray-800">
+                  {ingredients}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      )}
+
+      {/* ========== PANEL IMAGES ========== */}
+      {tab === "images" && (
+        <section className="bg-white rounded-3xl shadow-sm border border-[#e4ded1] p-6 space-y-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2
+                className="text-lg font-semibold"
+                style={{ color: "#2f4632" }}
+              >
+                Images du produit
+              </h2>
+              <p className="text-xs" style={{ color: "#43484f" }}>
+                Ces images s’affichent en carrousel sur la page détail du
+                produit.
+              </p>
+            </div>
+
+            {/* petit "filter" sur les images */}
+            <div className="flex items-center gap-2 text-xs">
+              <span style={{ color: "#43484f" }}>Filtrer :</span>
+              <select
+                className="border border-[#e4ded1] rounded-xl px-3 py-1 bg-white text-xs"
+                value={imageFilter}
+                onChange={(e) =>
+                  setImageFilter(e.target.value as ImageFilter)
+                }
+              >
+                <option value="all">Toutes</option>
+                <option value="visible">Visibles</option>
+                <option value="hidden">Masquées</option>
+              </select>
+              <span className="text-[11px] text-gray-500">
+                {filteredImages.length} / {images.length} image(s)
+              </span>
+            </div>
+          </div>
+
+          <div className="border border-[#e4ded1] rounded-2xl p-4 space-y-3 bg-[#faf9f6]">
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-gray-700">Ajouter une image</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  setNewFile(e.target.files?.[0] ?? null)
+                }
+              />
+            </label>
+            <button
+              onClick={addImage}
+              disabled={busy || !newFile}
+              className="px-4 py-2 rounded-xl text-sm font-semibold shadow"
+              style={{
+                backgroundColor: busy || !newFile ? "#9aa3a1" : "#2f4632",
+                color: "#ffffff",
+              }}
+            >
+              {busy ? "Uploading…" : "Ajouter l’image"}
+            </button>
+          </div>
+
+          <div className="space-y-3 max-h-[520px] overflow-auto pr-1">
+            {filteredImages.length === 0 && (
+              <div className="text-sm text-gray-600">
+                Aucune image selon ce filtre.
+              </div>
+            )}
+            {filteredImages.map((im, idx) => {
+              const realIndex = images.findIndex((x) => x.id === im.id);
+              return (
+                <div
+                  key={im.id}
+                  className="border border-[#e4ded1] rounded-2xl p-3 flex flex-col md:flex-row md:items-center gap-3 bg-[#faf9f6]"
+                >
+                  {im.image_url ? (
+                    <img
+                      src={cl(
+                        im.image_url,
+                        "f_auto,q_auto,w_240,h_160,c_fill"
+                      )}
+                      alt=""
+                      className="w-60 h-40 object-cover rounded-xl"
+                    />
+                  ) : (
+                    <div className="w-60 h-40 bg-[#f4f4f2] rounded-xl grid place-items-center text-xs text-gray-500">
+                      No image
+                    </div>
+                  )}
+
+                  <div className="flex-1 flex flex-col gap-3 text-xs">
+                    <label className="text-xs flex flex-col gap-1">
+                      <span className="text-gray-700">
+                        Remplacer l’image
+                      </span>
+                      <input
+                        className="block"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) =>
+                          e.target.files?.[0] &&
+                          replaceImage(im, e.target.files[0])
+                        }
+                      />
+                    </label>
+
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={im.visible}
+                        onChange={() => toggleImage(im)}
+                      />
+                      Visible
+                    </label>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => moveImage(realIndex, realIndex - 1)}
+                        disabled={realIndex === 0}
+                        className="px-2 py-1 rounded-lg border border-[#d4cec2] bg-white disabled:bg-[#e0e0dd]"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        onClick={() => moveImage(realIndex, realIndex + 1)}
+                        disabled={realIndex === images.length - 1}
+                        className="px-2 py-1 rounded-lg border border-[#d4cec2] bg-white disabled:bg-[#e0e0dd]"
+                      >
+                        ↓
+                      </button>
+                      <button
+                        onClick={() => deleteImage(im)}
+                        className="px-3 py-1 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -508,10 +735,10 @@ function LabeledInput(props: {
   placeholder?: string;
 }) {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-sm text-gray-600">{props.label}</span>
+    <label className="flex flex-col gap-1 text-sm">
+      <span className="text-gray-700">{props.label}</span>
       <input
-        className="border p-2 rounded"
+        className="border border-[#e4ded1] bg-[#faf9f6] p-2 rounded-xl text-sm"
         value={props.value}
         placeholder={props.placeholder}
         onChange={(e) => props.onChange(e.target.value)}
@@ -528,10 +755,10 @@ function LabeledTextArea(props: {
   rows?: number;
 }) {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-sm text-gray-600">{props.label}</span>
+    <label className="flex flex-col gap-1 text-sm">
+      <span className="text-gray-700">{props.label}</span>
       <textarea
-        className="border p-2 rounded"
+        className="border border-[#e4ded1] bg-[#faf9f6] p-2 rounded-xl text-sm"
         rows={props.rows ?? 3}
         value={props.value}
         placeholder={props.placeholder}
