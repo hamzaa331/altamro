@@ -247,7 +247,13 @@ export default function InterfaceCommunPage() {
       icon: "👤",
       section: "Clients",
     },
-
+{
+  href: "/dashboard/comments",
+  title: "Commentaires",
+  desc: "Masquer ou supprimer.",
+  icon: "💬",
+  section: "Clients",
+},
     {
       href: "/dashboard/branding",
       title: "Branding & Réseaux",

@@ -265,7 +265,13 @@ export default function ReservationsPage() {
       icon: "👤",
       section: "Clients",
     },
-
+{
+  href: "/dashboard/comments",
+  title: "Commentaires",
+  desc: "Masquer ou supprimer.",
+  icon: "💬",
+  section: "Clients",
+},
     {
       href: "/dashboard/branding",
       title: "Branding & Réseaux",
@@ -302,6 +308,7 @@ export default function ReservationsPage() {
     "/dashboard/reservations",
     "/dashboard/reclamations",
     "/dashboard/users",
+    "/dashboard/comments", // ✅ autoriser
   ]);
   actions = allActions.filter((a) => allowed.has(a.href));
 }

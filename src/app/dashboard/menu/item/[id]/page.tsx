@@ -132,6 +132,13 @@ function ItemDetailsPageInner({ id }: { id: string }) {
       section: "Clients",
     },
     {
+  href: "/dashboard/comments",
+  title: "Commentaires",
+  desc: "Masquer ou supprimer.",
+  icon: "💬",
+  section: "Clients",
+},
+    {
       href: "/dashboard/branding",
       title: "Branding & Réseaux",
       desc: "Logos et liens sociaux.",

@@ -505,6 +505,13 @@ export default function AdministrationPage() {
       icon: "👤",
       section: "Clients",
     },
+    {
+  href: "/dashboard/comments",
+  title: "Commentaires",
+  desc: "Masquer ou supprimer.",
+  icon: "💬",
+  section: "Clients",
+},
 
     // MARQUE
     {

@@ -145,6 +145,14 @@ const [displayEmail, setDisplayEmail] = useState("contact@altamaro.com");
       icon: "👤",
       section: "Clients",
     },
+    {
+  href: "/dashboard/comments",
+  title: "Commentaires",
+  desc: "Masquer ou supprimer.",
+  icon: "💬",
+  section: "Clients",
+},
+
 
     // ----- MARQUE -----
     {
@@ -204,6 +212,7 @@ const [displayEmail, setDisplayEmail] = useState("contact@altamaro.com");
     "/dashboard/reservations",
     "/dashboard/reclamations",
     "/dashboard/users",
+    "/dashboard/comments", // ✅ autoriser
   ]);
   actions = allActions.filter((a) => allowed.has(a.href));
 }

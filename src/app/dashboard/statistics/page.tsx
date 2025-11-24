@@ -181,6 +181,7 @@ export default function StatisticsPage() {
     { href: "/dashboard/reservations", title: "Réservations", desc: "Demandes des clients", icon: "📅", section: "Clients" },
     { href: "/dashboard/reclamations", title: "Réclamations", desc: "Messages clients", icon: "✉️", section: "Clients" },
     { href: "/dashboard/users", title: "Utilisateurs app", desc: "Profils, blocage & bannissement.", icon: "👤", section: "Clients" },
+    { href: "/dashboard/comments", title: "Commentaires", desc: "Masquer ou supprimer.", icon: "💬", section: "Clients", },
     
     { href: "/dashboard/branding", title: "Branding & Réseaux", desc: "Logos et liens", icon: "🎨", section: "Marque" },
     { href: "/dashboard/card", title: "Vidéos", desc: "Télécharger / gérer", icon: "🎞️", section: "Marque" },
@@ -216,6 +217,7 @@ export default function StatisticsPage() {
     "/dashboard/reservations",
     "/dashboard/reclamations",
     "/dashboard/users",
+    "/dashboard/comments", // ✅ autoriser
   ]);
   actions = allActions.filter((a) => allowed.has(a.href));
 }
