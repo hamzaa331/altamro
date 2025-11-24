@@ -87,16 +87,8 @@ export async function POST(req: NextRequest) {
     const token = createPasswordChangeToken(uid, email, new_password);
 
     // l’URL de confirmation (route API qui fera le vrai changement)
-    function getBaseUrlFromReq(req: NextRequest) {
-  const host = req.headers.get("host");
-  const proto = req.headers.get("x-forwarded-proto") || "http";
-  if (!host) return process.env.APP_BASE_URL || "http://localhost:3000";
-  return `${proto}://${host}`;
-}
+    const confirmUrl = `https://altamro.vercel.app/api/account/confirm-password-change?token=${token}`;
 
-// inside POST:
-const base = getBaseUrlFromReq(req).replace(/\/$/, "");
-const confirmUrl = `${base}/api/account/confirm-password-change?token=${token}`;
     const appName = process.env.APP_NAME || "Altamaro";
     const year = new Date().getFullYear();
 

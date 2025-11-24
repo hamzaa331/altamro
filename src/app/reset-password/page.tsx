@@ -118,11 +118,8 @@ export default function ResetPasswordPage({ searchParams }: Props) {
               disabled={loading}
               className="w-full rounded-lg bg-amber-600 text-white text-sm font-medium py-2.5 hover:bg-amber-700 disabled:opacity-60"
             >
-              {loading ? "Enregistrement..." : "Valider le nouveau mdp"}
+              {loading ? "Enregistrement..." : "Valider le mdp"}
             </button>
-            <h1 className="text-2xl font-semibold text-slate-900 mb-2 text-center">
-  RESET PAGE v999
-</h1>
           </form>
         )}
       </div>
