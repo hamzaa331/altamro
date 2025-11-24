@@ -1,7 +1,8 @@
 // src/app/reset-password/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Props = {
   searchParams: {
@@ -10,12 +11,22 @@ type Props = {
 };
 
 export default function ResetPasswordPage({ searchParams }: Props) {
+  const router = useRouter();
   const token = searchParams.token ?? "";
+
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const closeTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,10 +58,21 @@ export default function ResetPasswordPage({ searchParams }: Props) {
 
       const data = await res.json();
       if (!res.ok || data.ok !== true) {
-        throw new Error(data.error || "Échec de la réinitialisation du mot de passe");
+        throw new Error(
+          data.error || "Échec de la réinitialisation du mot de passe"
+        );
       }
 
       setMessage("Votre mot de passe a été réinitialisé avec succès.");
+
+      // ✅ After 3s: try to close tab, else redirect
+      closeTimerRef.current = window.setTimeout(() => {
+        // Try close (works only if tab was opened by script)
+        window.close();
+
+        // If close is blocked, go to login
+        router.replace("/login");
+      }, 3000);
     } catch (err: any) {
       setError(err.message || "Une erreur est survenue.");
     } finally {
@@ -102,14 +124,11 @@ export default function ResetPasswordPage({ searchParams }: Props) {
               />
             </div>
 
-            {error && (
-              <p className="text-sm text-red-600">
-                {error}
-              </p>
-            )}
+            {error && <p className="text-sm text-red-600">{error}</p>}
             {message && (
               <p className="text-sm text-emerald-600">
-                {message}
+                {message} <br />
+                Redirection automatique…
               </p>
             )}
 
@@ -118,7 +137,9 @@ export default function ResetPasswordPage({ searchParams }: Props) {
               disabled={loading}
               className="w-full rounded-lg bg-amber-600 text-white text-sm font-medium py-2.5 hover:bg-amber-700 disabled:opacity-60"
             >
-              {loading ? "Enregistrement..." : "Valider le mdp"}
+              {loading
+                ? "Enregistrement..."
+                : "Valider le nouveau mot de passe"}
             </button>
           </form>
         )}
